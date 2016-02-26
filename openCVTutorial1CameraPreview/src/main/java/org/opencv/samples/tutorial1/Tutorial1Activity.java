@@ -89,24 +89,15 @@ public class Tutorial1Activity extends Activity implements CvCameraViewListener2
         captura.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Tutorial1Activity.this.setContentView(R.layout.captured_layout);
-                //frameCapturado = frame;
-                ImageView iv = (ImageView)findViewById(R.id.originalImage);
-                //if(frameCapturado!=null){
-                  //  Log.e("CAPTURA","frame capturado");
-                //}else{
-                  //  Log.e("CAPTURA","frame no capturado");
-                //}
-                ImageView ev = (ImageView)findViewById(R.id.editedImage);
+                //Tutorial1Activity.this.setContentView(R.layout.captured_layout);
                 Bitmap img = Bitmap.createBitmap(frame.cols(),
                         frame.rows(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(frame, img);
-                iv.setImageBitmap(Bitmap.createScaledBitmap(img, img.getWidth() / 2,
-                        img.getHeight() / 2, false));
-                ev.setImageBitmap(Bitmap.createScaledBitmap(img,img.getWidth()/2,
-                        img.getHeight()/2,false));
+                Intent i = new Intent(Tutorial1Activity.this,EditActivity.class);
+                i.putExtra("imagen",img);
+                Log.e("INTENT","captura clicked, starting next activity");
+                startActivity(i);
 
-                //Tutorial1Activity.this.addContentView(iv,null);
             }
         });
     }
