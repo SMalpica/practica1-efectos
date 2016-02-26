@@ -18,6 +18,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name = ".EditActivity"
+            android:screenOrientation="landscape"/>
     </application>
 
     <supports-screens android:resizeable="true"

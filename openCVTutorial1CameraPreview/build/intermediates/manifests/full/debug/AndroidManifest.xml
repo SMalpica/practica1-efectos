@@ -45,6 +45,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="org.opencv.samples.tutorial1.EditActivity"
+            android:screenOrientation="landscape" />
     </application>
 
 </manifest>

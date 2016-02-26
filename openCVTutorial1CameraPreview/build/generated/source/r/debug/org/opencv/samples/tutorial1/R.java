@@ -43,9 +43,9 @@ containing a value of this type.
         public static final int any=0x7f050000;
         public static final int back=0x7f050001;
         public static final int btnAlien=0x7f050007;
-        public static final int btnCaptura=0x7f05000b;
         public static final int btnContraste=0x7f050006;
         public static final int btnDistorsion=0x7f050009;
+        public static final int btnGuardar=0x7f05000b;
         public static final int btnOtros=0x7f05000a;
         public static final int btnPoster=0x7f050008;
         public static final int captureButton=0x7f05000e;

@@ -89,12 +89,12 @@ public class Tutorial1Activity extends Activity implements CvCameraViewListener2
         captura.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Tutorial1Activity.this.setContentView(R.layout.captured_layout);
                 Bitmap img = Bitmap.createBitmap(frame.cols(),
                         frame.rows(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(frame, img);
+                Mapas.original=img;
+                Mapas.editado=img;
                 Intent i = new Intent(Tutorial1Activity.this,EditActivity.class);
-                i.putExtra("imagen",img);
                 Log.e("INTENT","captura clicked, starting next activity");
                 startActivity(i);
 
@@ -165,8 +165,9 @@ public class Tutorial1Activity extends Activity implements CvCameraViewListener2
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-        //Log.e("CAPTURA","tam inputFrame rgba "+inputFrame.rgba().size());
         frame = Mat.zeros(inputFrame.rgba().size(), CvType.CV_8UC3);
+        Mapas.color=frame;
+        Mapas.gris=inputFrame.gray().clone();
         Imgproc.cvtColor(inputFrame.rgba(),frame,Imgproc.COLOR_RGBA2RGB);
         //frame = inputFrame.gray();
         return inputFrame.rgba();

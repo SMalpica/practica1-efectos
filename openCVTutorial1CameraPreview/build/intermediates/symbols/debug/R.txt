@@ -4,9 +4,9 @@ int drawable icon 0x7f020000
 int id any 0x7f050000
 int id back 0x7f050001
 int id btnAlien 0x7f050007
-int id btnCaptura 0x7f05000b
 int id btnContraste 0x7f050006
 int id btnDistorsion 0x7f050009
+int id btnGuardar 0x7f05000b
 int id btnOtros 0x7f05000a
 int id btnPoster 0x7f050008
 int id captureButton 0x7f05000e
