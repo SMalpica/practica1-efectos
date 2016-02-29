@@ -3,10 +3,12 @@ package org.opencv.samples.tutorial1;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.text.Layout;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -28,6 +30,9 @@ public class EditActivity extends Activity {
     //private double alienLower = 0.28;
     //private double alienUpper = 0.68;
     ImageView ev;
+    private double thresh = 70;    //cuanto menor es este valor, mas colores hay en la imagen
+    private double maxval = 255;    //???
+    private int thresholdType = Imgproc.THRESH_BINARY;
 
     /** Called when the activity is first created. */
     @Override
@@ -40,8 +45,8 @@ public class EditActivity extends Activity {
         ev = (ImageView)findViewById(R.id.editedImage);
         iv.setImageBitmap(Bitmap.createScaledBitmap(Mapas.original, Mapas.original.getWidth() / 2,
                 Mapas.original.getHeight() / 2, false));
-        ev.setImageBitmap(Bitmap.createScaledBitmap(Mapas.original,Mapas.original.getWidth()/2,
-                Mapas.original.getHeight()/2,false));
+        ev.setImageBitmap(Bitmap.createScaledBitmap(Mapas.original,(Mapas.original.getWidth()/2)-2,
+                (Mapas.original.getHeight()/2)-2,false));
 
         Button contraste = (Button) findViewById(R.id.btnContraste);
         Button alien = (Button) findViewById(R.id.btnAlien);
@@ -53,6 +58,9 @@ public class EditActivity extends Activity {
         contraste.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //attempt to invoke virtual method getParent on a null reference.
+               // LinearLayout ll = (LinearLayout) findViewById(R.id.contraste);
+               // EditActivity.this.addContentView(ll,null);
                 setContraste();
             }
         });
@@ -184,7 +192,18 @@ public class EditActivity extends Activity {
     //metodo para aplicar el efecto poster a una imagen
     //reducir el numero de colores de una imagen
     public void setPoster(){
-
+        Mat rgb = Mapas.color.clone();
+        Vector<Mat> canales = new Vector<Mat>();
+        Core.split(rgb,canales);
+        //channels 0 --> red
+        //channels 2 --> blue
+        //channels 1 --> green
+        for(int i=0; i<canales.size(); i++){
+            //aplicar threshold para eliminar colores
+            Imgproc.threshold(canales.elementAt(i),canales.elementAt(i),thresh,maxval,thresholdType);
+        }
+        Core.merge(canales,rgb);
+        refrescar(rgb);
     }
     //metodo para guardar una imagen
     public void guardar(){
@@ -195,7 +214,7 @@ public class EditActivity extends Activity {
         Bitmap bmp=Bitmap.createBitmap(Mapas.editado);
         Utils.matToBitmap(mat,bmp);
         Mapas.editado=bmp;
-        ev.setImageBitmap(Bitmap.createScaledBitmap(bmp, Mapas.original.getWidth() / 2,
-                Mapas.original.getHeight() / 2, false));
+        ev.setImageBitmap(Bitmap.createScaledBitmap(bmp, (Mapas.original.getWidth() / 2)-2,
+                (Mapas.original.getHeight() / 2)-2, false));
     }
 }
