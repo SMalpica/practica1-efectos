@@ -1,14 +1,19 @@
 package org.opencv.samples.tutorial1;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.Layout;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -33,6 +38,7 @@ public class EditActivity extends Activity {
     private double thresh = 70;    //cuanto menor es este valor, mas colores hay en la imagen
     private double maxval = 255;    //???
     private int thresholdType = Imgproc.THRESH_BINARY;
+    private double distortion = 0.000001;
 
     /** Called when the activity is first created. */
     @Override
@@ -58,9 +64,6 @@ public class EditActivity extends Activity {
         contraste.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //attempt to invoke virtual method getParent on a null reference.
-               // LinearLayout ll = (LinearLayout) findViewById(R.id.contraste);
-               // EditActivity.this.addContentView(ll,null);
                 setContraste();
             }
         });
@@ -96,30 +99,78 @@ public class EditActivity extends Activity {
 //        });
     }
 
-    //metodo para aplicar el contraste a una imagen
+    //muestra el layout para los ajustes de contraste
     public void setContraste(){
+        //dialog
+        Dialog dialog = new Dialog(EditActivity.this);
+        dialog.setContentView(R.layout.slider_contraste);
+        SeekBar contraste = (SeekBar) findViewById(R.id.sliderContraste);
+        SeekBar iluminacion = (SeekBar) findViewById(R.id.sliderIluminacion);
+        dialog.getWindow().setGravity(Gravity.BOTTOM);
+        //http://stackoverflow.com/questions/9467026/change-dialog-position-on-the-screen
+        //dialog.getWindow().addFlags(~WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+        /*contraste.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });*/
+        //contraste.setMax(1);    //max alpha
+        //contraste.setSaveEnabled(true); //saves the state of the slider
+
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.setTitle("Contraste");
+        dialog.show();
+    }
+
+    //metodo para aplicar el contraste a una imagen
+    public void contraste(){
         Mat temp = Mapas.color.clone();
         //Imgproc.cvtColor(Mapas.color,temp,Imgproc.COLOR_RGB2YCrCb);
         Mat aux = Mat.zeros(temp.rows(),temp.cols(),Imgproc.COLOR_RGB2YCrCb);
         //-1 --> desired output matrix the same as the input one.
         temp.convertTo(aux,-1,alpha,beta);
-        /*for(int i = 0; i < temp.width();i++)
-            for(int j = 0 ; j < temp.height() ; j++)
-                for(int col = 0 ; col < 3 ; col++){
-                    Imgproc.cvtColor(Mapas.color,temp,Imgproc.COLOR_RGB2YCrCb);
-                    temp.convertTo();
-                    temp.
-                    temp.get(i,j)*alpha;
-                }*/
-        //for()
         refrescar(temp);
         //equalizehistory
 
         //cambiar canal 0
     }
+
     //metodo para aplicar distorsion de barril y de cojin ajustables a una imagen
     public void setDistorsion(){
-
+        //http://stackoverflow.com/questions/6199636/formulas-for-barrel-pincushion-distortion
+        Mat temp = Mapas.color.clone();
+        Mat resul = Mat.zeros(temp.size(), temp.type());
+        Mat mapx = Mat.zeros(temp.size(), CvType.CV_32FC1);
+        Mat mapy = Mat.zeros(temp.size(), CvType.CV_32FC1);
+        int w = temp.width();
+        int h = temp.height();
+        int Cx = w/2;
+        int Cy = h/2;
+        for(int y=0; y<h; y++){
+            for(int x=0; x<w; x++){
+                double u= Cx+(x-Cx)*(1+distortion*((x-Cx)*(x-Cx)+(y-Cy)*(y-Cy)));
+                mapx.put(x,y,u);
+            }
+        }
+        for(int y=0; y<h; y++){
+            for(int x=0; x<w; x++){
+                double u= Cy+(y-Cy)*(1+distortion*((x-Cx)*(x-Cx)+(y-Cy)*(y-Cy)));
+                mapy.put(x,y,u);
+            }
+        }
+        Imgproc.remap(temp,resul,mapx,mapy,Imgproc.INTER_LINEAR,Imgproc.BORDER_CONSTANT,new Scalar(0,0,0));
+        refrescar(resul);
     }
     //metodo para cambiar el color de piel a una imagen
     public void setAlien(){

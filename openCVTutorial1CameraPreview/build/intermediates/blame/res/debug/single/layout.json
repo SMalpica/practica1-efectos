@@ -4,12 +4,12 @@
         "source": "F:\\proyectoAxte\\Vision\\tutorial-1-camerapreview\\openCVTutorial1CameraPreview\\src\\main\\res\\layout\\tutorial1_surface_view.xml"
     },
     {
-        "merged": "F:\\proyectoAxte\\Vision\\tutorial-1-camerapreview\\openCVTutorial1CameraPreview\\build\\intermediates\\res\\merged\\debug\\layout\\slider_contraste.xml",
-        "source": "F:\\proyectoAxte\\Vision\\tutorial-1-camerapreview\\openCVTutorial1CameraPreview\\src\\main\\res\\layout\\slider_contraste.xml"
-    },
-    {
         "merged": "F:\\proyectoAxte\\Vision\\tutorial-1-camerapreview\\openCVTutorial1CameraPreview\\build\\intermediates\\res\\merged\\debug\\layout\\captured_layout.xml",
         "source": "F:\\proyectoAxte\\Vision\\tutorial-1-camerapreview\\openCVTutorial1CameraPreview\\src\\main\\res\\layout\\captured_layout.xml"
+    },
+    {
+        "merged": "F:\\proyectoAxte\\Vision\\tutorial-1-camerapreview\\openCVTutorial1CameraPreview\\build\\intermediates\\res\\merged\\debug\\layout\\slider_contraste.xml",
+        "source": "F:\\proyectoAxte\\Vision\\tutorial-1-camerapreview\\openCVTutorial1CameraPreview\\src\\main\\res\\layout\\slider_contraste.xml"
     },
     {
         "merged": "D:\\uni\\Vision\\tutorial-1-camerapreview\\openCVTutorial1CameraPreview\\build\\intermediates\\res\\merged\\debug\\layout\\tutorial1_surface_view.xml",
