@@ -5,6 +5,8 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.SystemClock;
 import android.text.Layout;
 import android.util.Log;
 import android.view.Gravity;
@@ -23,6 +25,8 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Vector;
 
 /**
@@ -32,8 +36,6 @@ public class EditActivity extends Activity {
 
     private double alpha=0.5;
     private double beta= 0;
-    //private double alienLower = 0.28;
-    //private double alienUpper = 0.68;
     ImageView ev;
     private double thresh = 70;    //cuanto menor es este valor, mas colores hay en la imagen
     private double maxval = 255;    //???
@@ -56,8 +58,8 @@ public class EditActivity extends Activity {
         ev = (ImageView)findViewById(R.id.editedImage);
         iv.setImageBitmap(Bitmap.createScaledBitmap(Mapas.original, Mapas.original.getWidth() / 2,
                 Mapas.original.getHeight() / 2, false));
-        ev.setImageBitmap(Bitmap.createScaledBitmap(Mapas.original,(Mapas.original.getWidth()/2)-2,
-                (Mapas.original.getHeight()/2)-2,false));
+        ev.setImageBitmap(Bitmap.createScaledBitmap(Mapas.original, (Mapas.original.getWidth() / 2) - 2,
+                (Mapas.original.getHeight() / 2) - 2, false));
 
         Button contraste = (Button) findViewById(R.id.btnContraste);
         Button alien = (Button) findViewById(R.id.btnAlien);
@@ -130,7 +132,7 @@ public class EditActivity extends Activity {
         SeekBar iluminacion = (SeekBar) dialog.getWindow().findViewById(R.id.sliderIluminacion);
         contraste.setMax(70);
         iluminacion.setMax(100);
-        contraste.setProgress((int) alpha * 100);
+        contraste.setProgress(((int) alpha * 100) - 30);
         Log.e("CONTRASTE", "progresso ajustado a: " + alpha * 100);
         iluminacion.setProgress((int) beta);
         //http://stackoverflow.com/questions/9467026/change-dialog-position-on-the-screen
@@ -183,7 +185,7 @@ public class EditActivity extends Activity {
         //Imgproc.cvtColor(Mapas.color,temp,Imgproc.COLOR_RGB2YCrCb);
         Mat aux = Mat.zeros(temp.rows(),temp.cols(),Imgproc.COLOR_RGB2YCrCb);
         //-1 --> desired output matrix the same as the input one.
-        temp.convertTo(aux,-1,alpha,beta);
+        temp.convertTo(aux, -1, alpha, beta);
         refrescar(aux);
         //equalizehistory
         //cambiar canal 0
@@ -345,7 +347,7 @@ public class EditActivity extends Activity {
     public void poster(){
         Mat rgb = Mapas.color.clone();
         Vector<Mat> canales = new Vector<Mat>();
-        Core.split(rgb,canales);
+        Core.split(rgb, canales);
         //channels 0 --> red
         //channels 2 --> blue
         //channels 1 --> green
@@ -358,7 +360,23 @@ public class EditActivity extends Activity {
     }
     //metodo para guardar una imagen
     public void guardar(){
-
+        File file = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES), "practica1"+ SystemClock.currentThreadTimeMillis()+".jpg");
+        //Bitmap bmp =ev.getDrawingCache();
+        Bitmap bmp = Mapas.editado;
+        //Utils.matToBitmap(Mapas.color,bmp);
+        Dialog d = new Dialog(EditActivity.this);
+        try{
+            FileOutputStream fos = new FileOutputStream(file);
+            bmp.compress(Bitmap.CompressFormat.JPEG,100,fos);
+            d.setTitle("Imagen guardada en "+file.getAbsolutePath());
+        }catch(Exception e){
+            Log.e("SAVE","Error al guardar el archivo");
+            d.setTitle("Error al guardar el archivo");
+            e.printStackTrace();
+        }
+        d.setCanceledOnTouchOutside(true);
+        d.show();
     }
     //metodo para refrescar imagen
     public void refrescar(Mat mat){
