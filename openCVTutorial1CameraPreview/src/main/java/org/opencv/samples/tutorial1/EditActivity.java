@@ -37,8 +37,13 @@ public class EditActivity extends Activity {
     ImageView ev;
     private double thresh = 70;    //cuanto menor es este valor, mas colores hay en la imagen
     private double maxval = 255;    //???
-    private int thresholdType = Imgproc.THRESH_BINARY;
-    private double distortion = 0.000001;
+    //private int thresholdType = Imgproc.THRESH_BINARY;    //original
+    private int thresholdType = Imgproc.THRESH_TOZERO;      //este va bien
+    private double distortion = -0.000001;
+
+    Dialog dialog;
+    Dialog dialogColor;
+    Dialog dialogDistorsion;
 
     /** Called when the activity is first created. */
     @Override
@@ -60,10 +65,11 @@ public class EditActivity extends Activity {
         Button guardar = (Button) findViewById(R.id.btnGuardar);
         Button poster = (Button) findViewById(R.id.btnPoster);
 //        Button otros = (Button) findViewById(R.id.btnOtros);
-
+        inicializacion();
         contraste.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                dialog.show();
                 setContraste();
             }
         });
@@ -76,6 +82,7 @@ public class EditActivity extends Activity {
         poster.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                dialogColor.show();
                 setPoster();
             }
         });
@@ -91,28 +98,47 @@ public class EditActivity extends Activity {
                 guardar();
             }
         });
-//        otros.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//
-//            }
-//        });
+    }
+
+    public void inicializacion(){
+        //dialogo contraste
+        dialog = new Dialog(EditActivity.this);
+        dialog.setContentView(R.layout.slider_contraste);
+        dialog.getWindow().setGravity(Gravity.BOTTOM);
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.setTitle("Ajustes de Contraste");
+        dialog.getWindow().setDimAmount(0);
+        //dialogo colores
+        dialogColor = new Dialog(EditActivity.this);
+        dialogColor.setContentView(R.layout.slider_colores);
+        dialogColor.getWindow().setGravity(Gravity.BOTTOM);
+        dialogColor.setCanceledOnTouchOutside(true);
+        dialogColor.setTitle("Ajustes de Colores");
+        dialogColor.getWindow().setDimAmount(0);
+        //dialogo distorsion
+        dialogDistorsion = new Dialog(EditActivity.this);
+        dialogDistorsion.setContentView(R.layout.slider_distorsion);
+        dialogDistorsion.getWindow().setGravity(Gravity.BOTTOM);
+        dialogDistorsion.setCanceledOnTouchOutside(true);
+        dialogDistorsion.setTitle("Ajustes de Distorsion");
+        dialogDistorsion.getWindow().setDimAmount(0);
     }
 
     //muestra el layout para los ajustes de contraste
     public void setContraste(){
-        //dialog
-        Dialog dialog = new Dialog(EditActivity.this);
-        dialog.setContentView(R.layout.slider_contraste);
-        SeekBar contraste = (SeekBar) findViewById(R.id.sliderContraste);
-        SeekBar iluminacion = (SeekBar) findViewById(R.id.sliderIluminacion);
-        dialog.getWindow().setGravity(Gravity.BOTTOM);
+        SeekBar contraste = (SeekBar) dialog.getWindow().findViewById(R.id.sliderContraste);
+        SeekBar iluminacion = (SeekBar) dialog.getWindow().findViewById(R.id.sliderIluminacion);
+        contraste.setMax(70);
+        iluminacion.setMax(100);
+        contraste.setProgress((int) alpha * 100);
+        Log.e("CONTRASTE", "progresso ajustado a: " + alpha * 100);
+        iluminacion.setProgress((int) beta);
         //http://stackoverflow.com/questions/9467026/change-dialog-position-on-the-screen
-        //dialog.getWindow().addFlags(~WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-        /*contraste.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        contraste.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
+                alpha = (progress + 30) / 100.0;
+                Log.e("CONTRASTE", "alpha cambiado a(/100): " + progress);
             }
 
             @Override
@@ -122,32 +148,73 @@ public class EditActivity extends Activity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                contraste();
+                Log.e("CONTRASTE", "Contraste cambiado a: " + alpha);
+            }
+        });
+        contraste.setSaveEnabled(true); //saves the state of the slider
+        //contraste.setSaveFromParentEnabled(true);
+        //contraste.setMax(1);    //max alpha
+        iluminacion.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                beta = progress;
+                Log.e("CONTRASTE", "beta cambiado a: " + beta);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
 
             }
-        });*/
-        //contraste.setMax(1);    //max alpha
-        //contraste.setSaveEnabled(true); //saves the state of the slider
 
-        dialog.setCanceledOnTouchOutside(true);
-        dialog.setTitle("Contraste");
-        dialog.show();
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                contraste();
+                Log.e("CONTRASTE", "Contraste cambiado a: " + beta);
+            }
+        });
+        iluminacion.setSaveEnabled(true);
     }
 
     //metodo para aplicar el contraste a una imagen
     public void contraste(){
+        Log.e("CONTRASTE", "en contraste: " + alpha + " " + beta);
         Mat temp = Mapas.color.clone();
         //Imgproc.cvtColor(Mapas.color,temp,Imgproc.COLOR_RGB2YCrCb);
         Mat aux = Mat.zeros(temp.rows(),temp.cols(),Imgproc.COLOR_RGB2YCrCb);
         //-1 --> desired output matrix the same as the input one.
         temp.convertTo(aux,-1,alpha,beta);
-        refrescar(temp);
+        refrescar(aux);
         //equalizehistory
-
         //cambiar canal 0
     }
 
-    //metodo para aplicar distorsion de barril y de cojin ajustables a una imagen
     public void setDistorsion(){
+        dialogDistorsion.show();
+        SeekBar distort = (SeekBar) dialogDistorsion.getWindow().findViewById(R.id.sliderDistorsion);
+        distort.setMax(200);
+        distort.setProgress(100);
+        distort.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                distortion = (progress-100)/100000000.0;
+                Log.e("DISTORTION","valor de distorsion "+distortion);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                distorsion();
+            }
+        });
+    }
+
+    //metodo para aplicar distorsion de barril y de cojin ajustables a una imagen
+    public void distorsion(){
         //http://stackoverflow.com/questions/6199636/formulas-for-barrel-pincushion-distortion
         Mat temp = Mapas.color.clone();
         Mat resul = Mat.zeros(temp.size(), temp.type());
@@ -157,19 +224,30 @@ public class EditActivity extends Activity {
         int h = temp.height();
         int Cx = w/2;
         int Cy = h/2;
+        float[] fmapx = new float[temp.height()*temp.width()];
+        float[] fmapy = new float[temp.height()*temp.width()];
+        int i=0;
+        Log.e("DISTORTION","En distorsion "+distortion);
         for(int y=0; y<h; y++){
             for(int x=0; x<w; x++){
-                double u= Cx+(x-Cx)*(1+distortion*((x-Cx)*(x-Cx)+(y-Cy)*(y-Cy)));
-                mapx.put(x,y,u);
+                float u= (float)(Cx+(x-Cx)*(1+distortion*((x-Cx)*(x-Cx)+(y-Cy)*(y-Cy))));
+                //mapx.put(x,y,u);
+                fmapx[i]=u;
+                i++;
             }
         }
+        i=0;
         for(int y=0; y<h; y++){
             for(int x=0; x<w; x++){
-                double u= Cy+(y-Cy)*(1+distortion*((x-Cx)*(x-Cx)+(y-Cy)*(y-Cy)));
-                mapy.put(x,y,u);
+                float u= (float)(Cy+(y-Cy)*(1+distortion*((x-Cx)*(x-Cx)+(y-Cy)*(y-Cy))));
+                //mapy.put(x,y,u);
+                fmapy[i]=u;
+                i++;
             }
         }
-        Imgproc.remap(temp,resul,mapx,mapy,Imgproc.INTER_LINEAR,Imgproc.BORDER_CONSTANT,new Scalar(0,0,0));
+        mapx.put(0,0,fmapx);
+        mapy.put(0, 0, fmapy);
+        Imgproc.remap(temp, resul, mapx, mapy, Imgproc.INTER_LINEAR, Imgproc.BORDER_CONSTANT, new Scalar(0, 0, 0));
         refrescar(resul);
     }
     //metodo para cambiar el color de piel a una imagen
@@ -240,9 +318,31 @@ public class EditActivity extends Activity {
 
         refrescar(temp);
     }
+
+    public void setPoster(){
+        SeekBar colores = (SeekBar) dialogColor.getWindow().findViewById(R.id.sliderColores);
+        colores.setMax(255);
+        colores.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                thresh = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                poster();
+            }
+        });
+    }
+
     //metodo para aplicar el efecto poster a una imagen
     //reducir el numero de colores de una imagen
-    public void setPoster(){
+    public void poster(){
         Mat rgb = Mapas.color.clone();
         Vector<Mat> canales = new Vector<Mat>();
         Core.split(rgb,canales);
