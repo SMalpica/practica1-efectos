@@ -67,6 +67,7 @@ public class EditActivity extends Activity {
         Button guardar = (Button) findViewById(R.id.btnGuardar);
         Button poster = (Button) findViewById(R.id.btnPoster);
 //        Button otros = (Button) findViewById(R.id.btnOtros);
+        Button emboss = (Button) findViewById(R.id.btnEmboss);
         inicializacion();
         contraste.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,6 +101,12 @@ public class EditActivity extends Activity {
                 guardar();
             }
         });
+        emboss.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setEmboss();
+            }
+        });
     }
 
     public void inicializacion(){
@@ -124,6 +131,21 @@ public class EditActivity extends Activity {
         dialogDistorsion.setCanceledOnTouchOutside(true);
         dialogDistorsion.setTitle("Ajustes de Distorsion");
         dialogDistorsion.getWindow().setDimAmount(0);
+    }
+
+    public void setEmboss(){
+        Mat temp = Mapas.gris.clone();
+        Mat kernel = Mat.zeros(3,3,CvType.CV_32FC1);
+        float[] k =  {-1,-1,0,
+                        -1,0,1,
+                        0,1,1};
+        kernel.put(0,0,k);
+        double factor = 1.0;
+        double bias = 128.0;
+        //temp.convertTo(aux, -1, factor, bias);
+        Imgproc.filter2D(temp,temp,-1,kernel);
+        temp.convertTo(temp,-1,factor,bias);
+        refrescar(temp);
     }
 
     //muestra el layout para los ajustes de contraste
@@ -369,7 +391,7 @@ public class EditActivity extends Activity {
         try{
             FileOutputStream fos = new FileOutputStream(file);
             bmp.compress(Bitmap.CompressFormat.JPEG,100,fos);
-            d.setTitle("Imagen guardada en "+file.getAbsolutePath());
+            d.setTitle("Imagen guardada en " + file.getAbsolutePath());
         }catch(Exception e){
             Log.e("SAVE","Error al guardar el archivo");
             d.setTitle("Error al guardar el archivo");
