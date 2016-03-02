@@ -68,7 +68,15 @@ public class EditActivity extends Activity {
         Button poster = (Button) findViewById(R.id.btnPoster);
 //        Button otros = (Button) findViewById(R.id.btnOtros);
         Button emboss = (Button) findViewById(R.id.btnEmboss);
+        Button sobel = (Button) findViewById(R.id.btnSobel);
+        Button autom = (Button) findViewById(R.id.btnCAutom);
         inicializacion();
+        autom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                contrasteAutomatico();
+            }
+        });
         contraste.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -107,6 +115,12 @@ public class EditActivity extends Activity {
                 setEmboss();
             }
         });
+        sobel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setSobel();
+            }
+        });
     }
 
     public void inicializacion(){
@@ -142,14 +156,37 @@ public class EditActivity extends Activity {
         kernel.put(0,0,k);
         double factor = 1.0;
         double bias = 128.0;
-        //temp.convertTo(aux, -1, factor, bias);
         Imgproc.filter2D(temp,temp,-1,kernel);
         temp.convertTo(temp,-1,factor,bias);
         refrescar(temp);
     }
 
+    public void setSobel(){
+        int scale = 1;
+        int delta = 0;
+        int ddepth = CvType.CV_16S;
+        Mat gray = Mapas.gris.clone();
+
+        Mat grad = Mat.zeros(gray.size(), gray.type());
+        Mat grad_x = Mat.zeros(gray.size(), gray.type()), grad_y = Mat.zeros(gray.size(), gray.type());
+        Mat abs_grad_x = Mat.zeros(gray.size(), gray.type()), abs_grad_y = Mat.zeros(gray.size(), gray.type());
+        Mat gaus = Mat.zeros(Mapas.color.size(), Mapas.color.type());
+        Imgproc.GaussianBlur(Mapas.color,gaus, new Size(3,3),0,0, Imgproc.BORDER_DEFAULT);
+
+        gaus.convertTo(gray,Imgproc.COLOR_BGR2GRAY);
+        Imgproc.Sobel(gray, grad_x, ddepth, 1, 0, 3, scale, delta, Imgproc.BORDER_DEFAULT);
+        Core.convertScaleAbs(grad_x, abs_grad_x);
+
+        Imgproc.Sobel(gray, grad_y, ddepth, 0, 1, 3, scale, delta, Imgproc.BORDER_DEFAULT);
+        Core.convertScaleAbs(grad_y, abs_grad_y);
+        Core.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
+        refrescar(grad);
+    }
+
     //muestra el layout para los ajustes de contraste
     public void setContraste(){
+        //TODO: contraste automatico
+        //TODO: ecualización
         SeekBar contraste = (SeekBar) dialog.getWindow().findViewById(R.id.sliderContraste);
         SeekBar iluminacion = (SeekBar) dialog.getWindow().findViewById(R.id.sliderIluminacion);
         contraste.setMax(70);
@@ -205,12 +242,30 @@ public class EditActivity extends Activity {
         Log.e("CONTRASTE", "en contraste: " + alpha + " " + beta);
         Mat temp = Mapas.color.clone();
         //Imgproc.cvtColor(Mapas.color,temp,Imgproc.COLOR_RGB2YCrCb);
-        Mat aux = Mat.zeros(temp.rows(),temp.cols(),Imgproc.COLOR_RGB2YCrCb);
+        Mat aux = Mat.zeros(temp.rows(),temp.cols(),temp.type());
         //-1 --> desired output matrix the same as the input one.
         temp.convertTo(aux, -1, alpha, beta);
-        refrescar(aux);
+        //Imgproc.cvtColor(temp, aux, Imgproc.COLOR_RGB2YCrCb);
         //equalizehistory
+        //Vector<Mat> canales = new Vector<Mat>();
+        //Core.split(aux, canales);
+        //Imgproc.equalizeHist(canales.get(0), canales.get(0));
+        //Core.merge(canales, aux);
+        //Imgproc.cvtColor(aux, aux, Imgproc.COLOR_YCrCb2RGB);
         //cambiar canal 0
+        refrescar(aux);
+    }
+
+    public void contrasteAutomatico(){
+        Mat temp = Mapas.color.clone();
+        Mat aux = Mat.zeros(temp.rows(),temp.cols(),temp.type());
+        Imgproc.cvtColor(temp,aux,Imgproc.COLOR_RGB2YCrCb);
+        Vector<Mat> canales = new Vector<Mat>();
+        Core.split(aux,canales);
+        Imgproc.equalizeHist(canales.get(0), canales.get(0));
+        Core.merge(canales, aux);
+        Imgproc.cvtColor(aux,aux,Imgproc.COLOR_YCrCb2RGB);
+        refrescar(aux);
     }
 
     public void setDistorsion(){
@@ -255,7 +310,6 @@ public class EditActivity extends Activity {
         for(int y=0; y<h; y++){
             for(int x=0; x<w; x++){
                 float u= (float)(Cx+(x-Cx)*(1+distortion*((x-Cx)*(x-Cx)+(y-Cy)*(y-Cy))));
-                //mapx.put(x,y,u);
                 fmapx[i]=u;
                 i++;
             }
@@ -264,7 +318,6 @@ public class EditActivity extends Activity {
         for(int y=0; y<h; y++){
             for(int x=0; x<w; x++){
                 float u= (float)(Cy+(y-Cy)*(1+distortion*((x-Cx)*(x-Cx)+(y-Cy)*(y-Cy))));
-                //mapy.put(x,y,u);
                 fmapy[i]=u;
                 i++;
             }
@@ -274,6 +327,7 @@ public class EditActivity extends Activity {
         Imgproc.remap(temp, resul, mapx, mapy, Imgproc.INTER_LINEAR, Imgproc.BORDER_CONSTANT, new Scalar(0, 0, 0));
         refrescar(resul);
     }
+
     //metodo para cambiar el color de piel a una imagen
     public void setAlien(){
         Mat temp = Mapas.color.clone();
@@ -281,53 +335,9 @@ public class EditActivity extends Activity {
         Mat aux= Mat.zeros(temp.rows(),temp.cols(),Imgproc.COLOR_RGB2HSV);
         Mat mascara = aux.clone();
         Imgproc.cvtColor(temp, aux, Imgproc.COLOR_RGB2HSV);
-
         //obtener matriz blanco negro --> blanco = piel
-        Log.e("ALIEN","pre inrange aux "+aux.empty());
-        Log.e("ALIEN", "pre inrange aux " + aux.channels());
         Core.inRange(aux, new Scalar(0, 10, 60), new Scalar(20, 150, 255), mascara);
         Imgproc.GaussianBlur(mascara, mascara, new Size(7, 7), 1, 1);
-        Log.e("ALIEN", "aux preBlur" + aux.empty());
-        Log.e("ALIEN", "aux preBlur" + aux.channels());
-        Log.e("ALIEN","aux size "+aux.size());
-
-        //Mat piel=Mat.zeros(aux.size(), CvType.CV_8UC3);
-//        Log.e("ALIEN","piel size "+piel.size());
-//        Log.e("ALIEN","aux "+aux.empty());
-//        Log.e("ALIEN","aux "+aux.channels());
-//        Imgproc.cvtColor(aux,piel,Imgproc.COLOR_HSV2RGB);
-//        Imgproc.cvtColor(aux,piel,Imgproc.COLOR_HSV2RGB);
-//        Mat  nueva = Mat.zeros(temp.size(),CvType.CV_8UC3);
-//        Imgproc.cvtColor(temp,nueva,CvType.CV_8UC3);
-//        Log.e("ALIEN","piel size "+nueva.size());
-//        Log.e("ALIEN","aux "+nueva.empty());
-//        Log.e("ALIEN","aux "+nueva.channels());
-//        //cambiar color de piel
-//        int size = (int)nueva.total() * nueva.channels();
-//        double[] tam = new double[size];
-//        nueva.get(0,0,tam);
-//        for(int i=0; i<tam.length; i++){
-//            i++;
-//            //if(){
-//
-//            //}
-//            tam[i] = (tam[i]+50)%256;
-//            i++;
-//        }
-//        nueva.put(0,0,tam);
-        //refrescar imagen en pantalla
-//        Mat image = Mapas.color.clone();
-//        Mat converted = Mat.zeros(image.size(), CvType.CV_8SC3);
-//        Imgproc.cvtColor(image, converted, Imgproc.COLOR_RGB2HSV);
-//        Mat skinMask = Mat.zeros(converted.size(), converted.type());
-//        Core.inRange(converted, new Scalar(0, 48, 80), new Scalar(20, 150, 255), skinMask);
-//
-//        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(1, 1));
-//        Imgproc.erode(skinMask, skinMask, kernel);
-//        Imgproc.dilate(skinMask, skinMask, kernel);
-//
-//        Imgproc.GaussianBlur(skinMask, skinMask, new Size(3, 3), 0);
-
 
         Vector<Mat> channels = new Vector<Mat>();
         Core.split(aux, channels);
@@ -337,8 +347,6 @@ public class EditActivity extends Activity {
         Core.merge(channels, aux);
 
         Imgproc.cvtColor(aux, temp, Imgproc.COLOR_HSV2RGB);
-
-        //return image;
 
         refrescar(temp);
     }
